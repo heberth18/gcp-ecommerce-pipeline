@@ -1,0 +1,23 @@
+# Virtualenv
+venv/
+
+# Airflow runtime (DB, logs, archivos generados)
+airflow/airflow.db
+airflow/logs/
+airflow/airflow.cfg
+airflow/__pycache__/
+airflow/dags/__pycache__/
+airflow/dags/utils/__pycache__/
+
+# Variables de entorno
+.env
+
+# Python
+__pycache__/
+*.pyc
+*.pyo
+.pytest_cache/
+
+# Docker
+postgres_data/
+EOF
