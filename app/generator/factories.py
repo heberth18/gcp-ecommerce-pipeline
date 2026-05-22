@@ -8,10 +8,7 @@ from app.models.entities import Customer, Inventory, Order, OrderItem, Payment, 
 
 fake = Faker()
 
-# --- Constants ---
-
-# error #1: capitalización mezclada — vive en el endpoint, no aquí
-# la DB guarda la categoría tal como está en esta lista
+# Categories stored with intentional mixed casing to simulate real data quality issues
 CATEGORIES = [
     "electronics", "Electronics", "ELECTRONICS",
     "clothing", "Clothing", "CLOTHING",
@@ -25,14 +22,11 @@ PAYMENT_METHODS = ["credit_card", "debit_card", "paypal", "bank_transfer"]
 ORDER_STATUSES = ["pending", "confirmed", "shipped", "delivered", "cancelled", "returned"]
 
 
-# --- Helpers ---
-
 def _new_uuid() -> str:
     return str(uuid.uuid4())
 
 
 def _random_datetime_on(day: date) -> datetime:
-    """Genera un datetime aleatorio dentro de un día específico en UTC."""
     return datetime(
         day.year, day.month, day.day,
         random.randint(0, 23),
@@ -43,10 +37,7 @@ def _random_datetime_on(day: date) -> datetime:
 
 
 def _realistic_order_status(order_date: date) -> str:
-    """
-    Determina el status final de una orden según su antigüedad.
-    Órdenes viejas están entregadas. Órdenes recientes están en tránsito.
-    """
+    """Return a status that makes sense given how old the order is."""
     age_days = (date.today() - order_date).days
 
     if age_days > 60:
@@ -70,7 +61,7 @@ def _realistic_order_status(order_date: date) -> str:
             weights=[50, 35, 15],
         )[0]
 
-    # error #4: 5% de las órdenes tienen status en mayúsculas
+    # 5% of orders have uppercase status (intentional noise)
     if random.random() < 0.05:
         status = status.upper()
 
@@ -78,12 +69,8 @@ def _realistic_order_status(order_date: date) -> str:
 
 
 def _payment_status_for_order(order_status: str) -> str:
-    """
-    El status del pago debe ser coherente con el status de la orden.
-    Una orden delivered casi siempre tiene pago completed.
-    Una orden cancelled casi siempre tiene pago refunded o failed.
-    """
-    normalized = order_status.lower()  # maneja el error de mayúsculas
+    """Return a payment status consistent with the order status."""
+    normalized = order_status.lower()  # handles uppercase noise
 
     if normalized in ["delivered", "shipped", "confirmed"]:
         return random.choices(["completed", "pending"], weights=[95, 5])[0]
@@ -93,16 +80,14 @@ def _payment_status_for_order(order_status: str) -> str:
         return random.choices(["pending", "completed", "failed"], weights=[60, 30, 10])[0]
 
 
-# --- Factories ---
-
 def make_customer(period_start: date, period_end: date) -> Customer:
     registration_date = fake.date_between(start_date=period_start, end_date=period_end)
     created_at = _random_datetime_on(registration_date)
 
     first_name = fake.first_name()
-    city = fake.city() if random.random() > 0.05 else None  # error #6: 5% nulo por dato faltante
+    city = fake.city() if random.random() > 0.05 else None  # 5% null — missing at registration
 
-    # error #3: 8% de first_name y city tienen espacios extra
+    # 8% of names and cities have extra whitespace (intentional noise)
     if random.random() < 0.08:
         first_name = f" {first_name} "
     if city and random.random() < 0.08:
@@ -126,11 +111,9 @@ def make_product() -> Product:
         date.today() - timedelta(days=random.randint(180, 365))
     )
 
-    # error #1: capitalización mezclada — se guarda así en DB
-    # el endpoint NO modifica esto, ya está inconsistente desde la fuente
     category = random.choice(CATEGORIES)
 
-    # error #6: 15% de productos no tienen descripción
+    # 15% of products have no description
     description = fake.text(max_nb_chars=200) if random.random() > 0.15 else None
 
     return Product(
@@ -139,14 +122,14 @@ def make_product() -> Product:
         category=category,
         description=description,
         price=round(random.uniform(5.0, 999.99), 2),
-        is_active=random.random() > 0.05,  # 5% inactivos
+        is_active=random.random() > 0.05,  # 5% inactive
         created_at=created_at,
         updated_at=created_at,
     )
 
 
 def make_inventory(product: Product) -> Inventory:
-    # error #7: 10% de productos nunca fueron restockeados (productos nuevos)
+    # 10% of products have never been restocked (newly added)
     is_new_product = random.random() < 0.10
 
     return Inventory(
@@ -169,8 +152,8 @@ def make_order(customer: Customer, order_date: date) -> Order:
     return Order(
         order_id=_new_uuid(),
         customer_id=customer.customer_id,
-        status=_realistic_order_status(order_date),  # error #4 incluido
-        total_amount=0,  # se actualiza después de crear los order_items
+        status=_realistic_order_status(order_date),
+        total_amount=0,  # updated after order items are created
         created_at=created_at,
         updated_at=created_at,
     )
@@ -184,7 +167,7 @@ def make_order_items(order: Order, products: list[Product]) -> list[OrderItem]:
     items = []
     for product in selected:
         quantity = random.randint(1, 3)
-        unit_price = float(product.price)  # precio inmutable al momento de la compra
+        unit_price = float(product.price)  # locked at purchase time
         subtotal = round(quantity * unit_price, 2)
 
         items.append(OrderItem(
@@ -195,17 +178,16 @@ def make_order_items(order: Order, products: list[Product]) -> list[OrderItem]:
             unit_price=unit_price,
             subtotal=subtotal,
             created_at=order.created_at,
-            updated_at=order.created_at,  # sin onupdate — append-only
+            updated_at=order.created_at,  # append-only, no onupdate
         ))
 
     return items
 
 
 def make_payment(order: Order) -> Payment:
-    # error #8: 3% de pagos sin payment_method (error del sistema)
+    # 3% of payments have no method (system error)
     payment_method = random.choice(PAYMENT_METHODS) if random.random() > 0.03 else None
 
-    # el pago siempre ocurre después de la orden (entre 1 y 60 minutos después)
     payment_datetime = order.created_at + timedelta(minutes=random.randint(1, 60))
 
     return Payment(
@@ -213,7 +195,7 @@ def make_payment(order: Order) -> Payment:
         order_id=order.order_id,
         payment_method=payment_method,
         status=_payment_status_for_order(order.status),
-        amount=float(order.total_amount),  # Numeric en DB — string en endpoint (error #2)
+        amount=float(order.total_amount),
         created_at=payment_datetime,
         updated_at=payment_datetime,
     )

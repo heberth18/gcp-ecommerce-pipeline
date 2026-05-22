@@ -6,8 +6,6 @@ from pydantic import BaseModel, ConfigDict, field_validator
 T = TypeVar("T")
 
 
-# --- Wrappers de paginación ---
-
 class PaginationMeta(BaseModel):
     page: int
     page_size: int
@@ -28,20 +26,15 @@ class PaginatedResponse(BaseModel, Generic[T]):
     metadata: RequestMeta
 
 
-# --- Schemas por entidad ---
-# Cada schema define exactamente qué devuelve el endpoint al DAG.
-# Los errores realistas pasan sin modificación (espacios, nulos, mayúsculas).
-# La excepción es payments.amount: se convierte de Numeric a str aquí.
-
 class CustomerResponse(BaseModel):
     model_config = ConfigDict(from_attributes=True)
 
     customer_id: str
     email: str
-    first_name: str        # error #3: puede tener espacios extra
+    first_name: str        # may have leading/trailing spaces
     last_name: str
     country: str
-    city: str | None       # error #6: nulo si no completó el registro
+    city: str | None       # null if not filled at registration
     registration_date: date
     created_at: datetime
     updated_at: datetime
@@ -52,8 +45,8 @@ class ProductResponse(BaseModel):
 
     product_id: str
     name: str
-    category: str          # error #1: capitalización mezclada
-    description: str | None  # error #6: nulo si el vendedor no lo completó
+    category: str          # mixed-case values
+    description: str | None  # null if seller didn't provide one
     price: float
     is_active: bool
     created_at: datetime
@@ -65,7 +58,7 @@ class OrderResponse(BaseModel):
 
     order_id: str
     customer_id: str
-    status: str            # error #4: puede estar en mayúsculas
+    status: str            # occasionally uppercase
     total_amount: float
     created_at: datetime
     updated_at: datetime
@@ -89,20 +82,16 @@ class PaymentResponse(BaseModel):
 
     payment_id: str
     order_id: str
-    payment_method: str | None  # error #8: nulo por error del sistema
+    payment_method: str | None  # null on system error
     status: str
-    amount: str                 # error #2: Numeric en DB → str en el endpoint
+    amount: str                 # DB stores Numeric; returned as string to simulate an API inconsistency
     created_at: datetime
     updated_at: datetime
 
     @field_validator("amount", mode="before")
     @classmethod
     def convert_amount_to_string(cls, v) -> str:
-        """
-        El amount se guarda como Numeric(10,2) en PostgreSQL.
-        El endpoint lo devuelve como string para simular un error real de API.
-        dbt Staging resolverá esto con CAST(amount AS NUMERIC).
-        """
+        # dbt staging layer resolves this with CAST(amount AS NUMERIC)
         return str(v)
 
 
@@ -113,6 +102,6 @@ class InventoryResponse(BaseModel):
     product_id: str
     stock_quantity: int
     reorder_point: int
-    last_restock_date: date | None  # error #7: nulo si producto nunca fue restockeado
+    last_restock_date: date | None  # null for newly added products
     created_at: datetime
     updated_at: datetime

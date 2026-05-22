@@ -17,9 +17,8 @@ router = APIRouter(prefix="/order_items", tags=["order_items"])
 
 @router.get("", response_model=PaginatedResponse[OrderItemResponse])
 def get_order_items(
-    # order_items es append-only: nunca se modifica, solo se crea
-    # por eso usa created_after en lugar de updated_after
-    created_after: datetime | None = Query(None, description="Extrae registros creados después de esta fecha (UTC)"),
+    # order_items is append-only, so we filter by created_at instead of updated_at
+    created_after: datetime | None = Query(None, description="Return records created after this UTC timestamp"),
     page: int = Query(1, ge=1),
     page_size: int = Query(100, ge=1, le=1000),
     db: Session = Depends(get_db),
@@ -49,7 +48,7 @@ def get_order_items(
         ),
         metadata=RequestMeta(
             entity="order_items",
-            filter_field="created_after",  # distinto al resto — append-only
+            filter_field="created_after",
             filter_value=str(created_after) if created_after else None,
             extracted_at=datetime.now(timezone.utc),
         ),

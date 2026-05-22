@@ -20,10 +20,10 @@ class Customer(Base):
 
     customer_id: Mapped[str] = mapped_column(String, primary_key=True, default=new_uuid)
     email: Mapped[str] = mapped_column(String, unique=True, nullable=False)
-    first_name: Mapped[str] = mapped_column(String, nullable=False)  # error: espacios extra ocasionales
+    first_name: Mapped[str] = mapped_column(String, nullable=False)  # may have leading/trailing spaces (intentional noise)
     last_name: Mapped[str] = mapped_column(String, nullable=False)
     country: Mapped[str] = mapped_column(String, nullable=False)
-    city: Mapped[str | None] = mapped_column(String, nullable=True)  # error: nulo por dato faltante
+    city: Mapped[str | None] = mapped_column(String, nullable=True)  # null when not filled at registration
     registration_date: Mapped[datetime] = mapped_column(Date, nullable=False)
     created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), default=now_utc)
     updated_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), default=now_utc, onupdate=now_utc)
@@ -36,8 +36,8 @@ class Product(Base):
 
     product_id: Mapped[str] = mapped_column(String, primary_key=True, default=new_uuid)
     name: Mapped[str] = mapped_column(String, nullable=False)
-    category: Mapped[str] = mapped_column(String, nullable=False)  # error: capitalización mezclada en endpoint
-    description: Mapped[str | None] = mapped_column(Text, nullable=True)  # error: nulo por dato faltante
+    category: Mapped[str] = mapped_column(String, nullable=False)  # stored with mixed casing intentionally
+    description: Mapped[str | None] = mapped_column(Text, nullable=True)  # null when seller didn't provide one
     price: Mapped[float] = mapped_column(Numeric(10, 2), nullable=False)
     is_active: Mapped[bool] = mapped_column(Boolean, default=True, nullable=False)
     created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), default=now_utc)
@@ -52,7 +52,7 @@ class Order(Base):
 
     order_id: Mapped[str] = mapped_column(String, primary_key=True, default=new_uuid)
     customer_id: Mapped[str] = mapped_column(String, ForeignKey("customers.customer_id"), nullable=False)
-    status: Mapped[str] = mapped_column(String, nullable=False)  # error: mayúsculas ocasionales en DB
+    status: Mapped[str] = mapped_column(String, nullable=False)  # occasionally uppercase (intentional noise)
     total_amount: Mapped[float] = mapped_column(Numeric(10, 2), nullable=False)
     created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), default=now_utc)
     updated_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), default=now_utc, onupdate=now_utc)
@@ -69,8 +69,8 @@ class OrderItem(Base):
     order_id: Mapped[str] = mapped_column(String, ForeignKey("orders.order_id"), nullable=False)
     product_id: Mapped[str] = mapped_column(String, ForeignKey("products.product_id"), nullable=False)
     quantity: Mapped[int] = mapped_column(Integer, nullable=False)
-    unit_price: Mapped[float] = mapped_column(Numeric(10, 2), nullable=False)  # inmutable: precio al momento de compra
-    subtotal: Mapped[float] = mapped_column(Numeric(10, 2), nullable=False)    # quantity × unit_price
+    unit_price: Mapped[float] = mapped_column(Numeric(10, 2), nullable=False)  # locked at purchase time
+    subtotal: Mapped[float] = mapped_column(Numeric(10, 2), nullable=False)
     created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), default=now_utc)
     updated_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), default=now_utc)
 
@@ -83,9 +83,9 @@ class Payment(Base):
 
     payment_id: Mapped[str] = mapped_column(String, primary_key=True, default=new_uuid)
     order_id: Mapped[str] = mapped_column(String, ForeignKey("orders.order_id"), nullable=False)
-    payment_method: Mapped[str | None] = mapped_column(String, nullable=True)   # error: nulo por error del sistema
+    payment_method: Mapped[str | None] = mapped_column(String, nullable=True)   # null on system error
     status: Mapped[str] = mapped_column(String, nullable=False)
-    amount: Mapped[float] = mapped_column(Numeric(10, 2), nullable=False)       # correcto en DB, string en endpoint
+    amount: Mapped[float] = mapped_column(Numeric(10, 2), nullable=False)       # stored as Numeric; endpoint returns it as string
     created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), default=now_utc)
     updated_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), default=now_utc, onupdate=now_utc)
 
@@ -99,7 +99,7 @@ class Inventory(Base):
     product_id: Mapped[str] = mapped_column(String, ForeignKey("products.product_id"), nullable=False, unique=True)
     stock_quantity: Mapped[int] = mapped_column(Integer, nullable=False)
     reorder_point: Mapped[int] = mapped_column(Integer, nullable=False)
-    last_restock_date: Mapped[datetime | None] = mapped_column(Date, nullable=True)  # error: nulo estructural (producto nuevo)
+    last_restock_date: Mapped[datetime | None] = mapped_column(Date, nullable=True)  # null for newly added products
     created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), default=now_utc)
     updated_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), default=now_utc, onupdate=now_utc)
 

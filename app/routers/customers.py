@@ -17,7 +17,7 @@ router = APIRouter(prefix="/customers", tags=["customers"])
 
 @router.get("", response_model=PaginatedResponse[CustomerResponse])
 def get_customers(
-    updated_after: datetime | None = Query(None, description="Extrae registros actualizados después de esta fecha (UTC)"),
+    updated_after: datetime | None = Query(None, description="Return records updated after this UTC timestamp"),
     page: int = Query(1, ge=1),
     page_size: int = Query(100, ge=1, le=1000),
     db: Session = Depends(get_db),

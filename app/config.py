@@ -7,7 +7,7 @@ class Settings(BaseSettings):
 
     class Config:
         env_file = ".env"
-        extra = "ignore"  # ignora variables del .env no definidas en Settings (POSTGRES_USER, etc)
+        extra = "ignore"  # suppress warnings for undeclared vars like POSTGRES_USER
 
 
 settings = Settings()
