@@ -20,4 +20,5 @@ __pycache__/
 
 # Docker
 postgres_data/
-EOF
+
+secrets/
