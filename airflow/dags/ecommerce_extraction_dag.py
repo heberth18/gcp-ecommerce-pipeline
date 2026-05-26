@@ -1,4 +1,3 @@
-import json
 import logging
 from datetime import datetime, timedelta, timezone
 
@@ -8,6 +7,7 @@ from airflow.operators.python import PythonOperator
 from utils.api_client import fetch_entity
 from utils.state_manager import get_last_extracted, set_last_extracted, get_run_timestamp
 from utils.gcs_writer import write_parquet_to_gcs
+from utils.bq_loader import load_parquet_to_bronze
 
 logger = logging.getLogger(__name__)
 
@@ -28,13 +28,18 @@ default_args = {
 }
 
 
+def get_run_ts(**context) -> None:
+    ts = get_run_timestamp()
+    logger.info(f"Run timestamp: {ts}")
+    context["ti"].xcom_push(key="run_timestamp", value=ts)
+
+
 def extract_entity(entity: str, **context) -> None:
-    """Extract all new records for an entity and write them to GCS as Parquet/Snappy."""
     run_timestamp = context["ti"].xcom_pull(
         task_ids="get_run_timestamp", key="run_timestamp"
     )
     since = get_last_extracted(entity)
-    execution_date = context["ds"]  # YYYY-MM-DD — used for GCS partition
+    execution_date = context["ds"]
 
     logger.info(f"[{entity}] Extracting since: {since}")
     logger.info(f"[{entity}] Run timestamp: {run_timestamp}")
@@ -45,9 +50,8 @@ def extract_entity(entity: str, **context) -> None:
 
     logger.info(f"[{entity}] Total records extracted: {len(all_records)}")
 
-    # Write to GCS — XCom carries only the file path, not the data
     gcs_path = write_parquet_to_gcs(
-        records=all_records,
+        data=all_records,
         entity=entity,
         execution_date=execution_date,
     )
@@ -55,22 +59,27 @@ def extract_entity(entity: str, **context) -> None:
 
     context["ti"].xcom_push(key=f"{entity}_gcs_path", value=gcs_path)
 
-    # Only advance the watermark if extraction succeeded
     set_last_extracted(entity, run_timestamp)
     logger.info(f"[{entity}] Watermark updated to: {run_timestamp}")
 
 
-def get_run_ts(**context) -> None:
-    """Capture a single cut-off timestamp shared by all entity tasks in this run."""
-    ts = get_run_timestamp()
-    logger.info(f"Run timestamp: {ts}")
-    context["ti"].xcom_push(key="run_timestamp", value=ts)
+def load_to_bronze(entity: str, **context) -> dict:
+    # pulls the GCS path pushed by the extract task for this entity
+    gcs_uri = context["ti"].xcom_pull(
+        task_ids=f"extract_{entity}",
+        key=f"{entity}_gcs_path",
+    )
+    return load_parquet_to_bronze(
+        gcs_uri=gcs_uri,
+        entity=entity,
+        execution_date=context["ds"],
+    )
 
 
 with DAG(
     dag_id="ecommerce_extraction",
     description="Incremental extraction from the FastAPI simulator to GCS",
-    schedule_interval="@hourly",
+    schedule_interval="@daily",
     start_date=datetime(2024, 1, 1, tzinfo=timezone.utc),
     catchup=False,
     max_active_runs=1,
@@ -83,13 +92,17 @@ with DAG(
         python_callable=get_run_ts,
     )
 
-    extraction_tasks = []
     for entity in ENTITIES:
-        task = PythonOperator(
+        extract_task = PythonOperator(
             task_id=f"extract_{entity}",
             python_callable=extract_entity,
             op_kwargs={"entity": entity},
         )
-        extraction_tasks.append(task)
 
-    get_timestamp_task >> extraction_tasks
+        load_task = PythonOperator(
+            task_id=f"load_{entity}_bq",
+            python_callable=load_to_bronze,
+            op_kwargs={"entity": entity},
+        )
+
+        get_timestamp_task >> extract_task >> load_task
