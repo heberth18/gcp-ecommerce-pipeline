@@ -48,8 +48,8 @@ Looker Studio
 | Airflow DAG — extracción incremental | ✅ Completado |
 | GCS — Parquet/Snappy particionado | ✅ Completado |
 | BigQuery Bronze — schema explícito | ✅ Completado |
-| dbt Staging | 🔄 En progreso |
-| dbt Gold | ⏳ Pendiente |
+| dbt Staging | ✅ Completado|
+| dbt Gold | 🔄 En proceso |
 | Looker Studio | ⏳ Pendiente |
 
 ---
@@ -61,6 +61,7 @@ Looker Studio
 - **Stack completamente contenerizado** — un solo `docker compose up` levanta todo
 - **Idempotencia** en GCS y BigQuery — reejecutar el mismo run nunca duplica datos
 - **Schema explícito** en BigQuery — cambios de tipo en la fuente fallan de forma visible
+- **8 errores del simulador** resueltos exclusivamente en dbt Staging — tres tipos de nulos, duplicados, tipos incorrectos y capitalización inconsistente
 
 ---
 
