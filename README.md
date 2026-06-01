@@ -49,8 +49,8 @@ Looker Studio
 | GCS — Parquet/Snappy particionado | ✅ Completado |
 | BigQuery Bronze — schema explícito | ✅ Completado |
 | dbt Staging | ✅ Completado|
-| dbt Gold | 🔄 En proceso |
-| Looker Studio | ⏳ Pendiente |
+| dbt Gold | ✅ Completado |
+| Looker Studio | 🔄 En proceso |
 
 ---
 
@@ -62,7 +62,24 @@ Looker Studio
 - **Idempotencia** en GCS y BigQuery — reejecutar el mismo run nunca duplica datos
 - **Schema explícito** en BigQuery — cambios de tipo en la fuente fallan de forma visible
 - **8 errores del simulador** resueltos exclusivamente en dbt Staging — tres tipos de nulos, duplicados, tipos incorrectos y capitalización inconsistente
+- **Arquitectura medallion Bronze** → Staging → Gold con separación estricta de responsabilidades
+- **78 tests** de calidad de datos en Staging y Gold
 
+## Modelado dimensional — dbt Gold
+
+**Facts**
+- `fct_orders` — una fila por orden con revenue real desde payments completados
+- `fct_order_items` — una fila por ítem vendido con quantity, unit_price y subtotal
+
+**Dimensions**
+- `dim_customers` — atributos descriptivos de clientes
+- `dim_products` — atributos descriptivos de productos
+
+**KPIs pre-agregados**
+- `kpi_revenue_by_month` — revenue y órdenes por mes
+- `kpi_revenue_by_category` — revenue y unidades vendidas por categoría
+- `kpi_orders_by_status` — conteo de órdenes por estado
+- `kpi_revenue_by_country` — revenue y órdenes por país
 ---
 
 ## Correr el proyecto
