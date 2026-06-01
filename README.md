@@ -3,7 +3,7 @@
 Pipeline de Data Engineering end-to-end sobre GCP para un caso de uso real:
 **startup e-commerce B2C que necesita métricas confiables, reproducibles y auditables de ventas y clientes.**
 
-> 🚧 En desarrollo activo.
+> Pipeline completo: simulador → Airflow → GCS → BigQuery → dbt → Looker Studio
 
 ---
 
@@ -40,20 +40,6 @@ Looker Studio
 
 ---
 
-## Estado actual
-
-| Componente | Estado |
-|---|---|
-| Simulador Ecommerce API (FastAPI + PostgreSQL) | ✅ Completado |
-| Airflow DAG — extracción incremental | ✅ Completado |
-| GCS — Parquet/Snappy particionado | ✅ Completado |
-| BigQuery Bronze — schema explícito | ✅ Completado |
-| dbt Staging | ✅ Completado|
-| dbt Gold | ✅ Completado |
-| Looker Studio | 🔄 En proceso |
-
----
-
 ## Highlights técnicos
 
 - **Incremental extraction** con `updated_after` y estado persistente en Airflow Variables
@@ -80,6 +66,13 @@ Looker Studio
 - `kpi_revenue_by_category` — revenue y unidades vendidas por categoría
 - `kpi_orders_by_status` — conteo de órdenes por estado
 - `kpi_revenue_by_country` — revenue y órdenes por país
+
+---
+
+## Dashboard
+
+https://datastudio.google.com/reporting/73196a5d-33ff-4d5f-899a-07991cd8a774
+
 ---
 
 ## Correr el proyecto
