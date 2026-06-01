@@ -20,6 +20,17 @@ cleaned as (
         partition by payment_id
         order by updated_at desc
     ) = 1
+),
+
+deduped as (
+
+    select *
+    from cleaned
+    qualify row_number() over (
+        partition by order_id, status
+        order by updated_at desc
+    ) = 1
+
 )
 
-select * from cleaned
+select * from deduped
