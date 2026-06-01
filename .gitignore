@@ -17,8 +17,13 @@ __pycache__/
 *.pyc
 *.pyo
 .pytest_cache/
+.python-version
 
 # Docker
 postgres_data/
 
 secrets/
+
+# dbt
+dbt/target/
+dbt/logs/
