@@ -66,6 +66,7 @@ services:
       - ./airflow/logs:/opt/airflow/logs
       - ./airflow/plugins:/opt/airflow/plugins
       - ./secrets:/opt/airflow/secrets
+      - ./dbt:/opt/airflow/dbt
     entrypoint: /bin/bash
     command:
       - -c
@@ -100,6 +101,7 @@ services:
       - ./airflow/logs:/opt/airflow/logs
       - ./airflow/plugins:/opt/airflow/plugins
       - ./secrets:/opt/airflow/secrets
+      - ./dbt:/opt/airflow/dbt
     ports:
       - "8080:8080"
     command: webserver
@@ -124,6 +126,7 @@ services:
       - ./airflow/logs:/opt/airflow/logs
       - ./airflow/plugins:/opt/airflow/plugins
       - ./secrets:/opt/airflow/secrets
+      - ./dbt:/opt/airflow/dbt
     command: scheduler
 
 volumes:

@@ -1,0 +1,12 @@
+ecommerce_pipeline:
+  target: dev
+  outputs:
+    dev:
+      type: bigquery
+      method: service-account
+      project: ecommerce-data-platform-497218
+      dataset: ecommerce_pipeline
+      location: US
+      keyfile: /opt/airflow/secrets/gcp-credentials.json
+      threads: 4
+      timeout_seconds: 300

@@ -3,6 +3,7 @@ from datetime import datetime, timedelta, timezone
 
 from airflow import DAG
 from airflow.operators.python import PythonOperator
+from airflow.operators.bash import BashOperator
 
 from utils.api_client import fetch_entity
 from utils.state_manager import get_last_extracted, set_last_extracted, get_run_timestamp
@@ -92,6 +93,8 @@ with DAG(
         python_callable=get_run_ts,
     )
 
+    load_tasks = []  # accumulates load tasks to connect with dbt_run later
+
     for entity in ENTITIES:
         extract_task = PythonOperator(
             task_id=f"extract_{entity}",
@@ -105,4 +108,17 @@ with DAG(
             op_kwargs={"entity": entity},
         )
 
+        load_tasks.append(load_task)
+
         get_timestamp_task >> extract_task >> load_task
+
+    dbt_run = BashOperator(
+        task_id="dbt_run",
+        bash_command=(
+            "dbt run "
+            "--project-dir /opt/airflow/dbt "
+            "--profiles-dir /opt/airflow/dbt"
+        ),
+    )
+
+    load_tasks >> dbt_run
