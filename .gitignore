@@ -27,3 +27,8 @@ secrets/
 # dbt
 dbt/target/
 dbt/logs/
+
+terraform/terraform.tfvars
+terraform/.terraform/
+terraform/terraform.tfstate
+terraform/terraform.tfstate.backup

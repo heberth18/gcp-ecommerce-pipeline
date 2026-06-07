@@ -42,14 +42,16 @@ Looker Studio
 
 ## Highlights técnicos
 
-- **Incremental extraction** con `updated_after` y estado persistente en Airflow Variables
+- **Incremental extraction** con updated_after y estado persistente en Airflow Variables
 - **Simulador realista** con 8 errores controlados para demostrar limpieza real en Staging
-- **Stack completamente contenerizado** — un solo `docker compose up` levanta todo
+- **Stack completamente contenerizado** — un solo docker compose up levanta todo
+- **Infraestructura como código** — GCS bucket y datasets de BigQuery provisionados con Terraform
+- **CI/CD** — dbt test corre automáticamente en cada push via GitHub Actions
 - **Idempotencia** en GCS y BigQuery — reejecutar el mismo run nunca duplica datos
 - **Schema explícito** en BigQuery — cambios de tipo en la fuente fallan de forma visible
-- **8 errores del simulador** resueltos exclusivamente en dbt Staging — tres tipos de nulos, duplicados, tipos incorrectos y capitalización inconsistente
-- **Arquitectura medallion Bronze** → Staging → Gold con separación estricta de responsabilidades
+- **Arquitectura medallion** Bronze → Staging → Gold con separación estricta de responsabilidades
 - **78 tests** de calidad de datos en Staging y Gold
+- **Alertas en Airflow** — notificación por email si el DAG falla
 
 ## Modelado dimensional — dbt Gold
 
