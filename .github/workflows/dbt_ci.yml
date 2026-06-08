@@ -22,11 +22,11 @@ jobs:
       - name: Install DAG dependencies
         run: |
           pip install \
-            apache-airflow==2.8.1 \
-            apache-airflow-providers-google==10.17.0 \
-            pandas==2.2.1 \
-            pyarrow==15.0.2 \
-            google-cloud-storage==2.16.0
+            apache-airflow \
+            apache-airflow-providers-google \
+            pandas \
+            pyarrow \
+            google-cloud-storage
 
       - name: Validate DAG syntax
         run: python -m py_compile airflow/dags/ecommerce_extraction_dag.py
