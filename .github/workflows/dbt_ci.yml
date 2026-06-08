@@ -1,0 +1,92 @@
+name: CI Pipeline
+
+on:
+  push:
+    branches:
+      - main
+
+jobs:
+  validate-dag:
+    name: Validate Airflow DAG
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+
+      - name: Install DAG dependencies
+        run: |
+          pip install \
+            apache-airflow==2.8.1 \
+            apache-airflow-providers-google==10.17.0 \
+            pandas==2.2.1 \
+            pyarrow==15.0.2 \
+            google-cloud-storage==2.16.0
+
+      - name: Validate DAG syntax
+        run: python -m py_compile airflow/dags/ecommerce_extraction_dag.py
+
+  dbt-compile:
+    name: dbt Compile
+    runs-on: ubuntu-latest
+    needs: validate-dag
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+
+      - name: Install dbt
+        run: pip install dbt-bigquery==1.7.7
+
+      - name: Write GCP credentials
+        run: |
+          mkdir -p /tmp/secrets
+          echo '${{ secrets.GCP_CREDENTIALS }}' > /tmp/secrets/gcp-credentials.json
+
+      - name: dbt compile
+        env:
+          DBT_KEYFILE_PATH: /tmp/secrets/gcp-credentials.json
+        run: |
+          dbt compile \
+            --project-dir dbt \
+            --profiles-dir dbt
+
+  dbt-test:
+    name: dbt Test
+    runs-on: ubuntu-latest
+    needs: dbt-compile
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+
+      - name: Install dbt
+        run: pip install dbt-bigquery==1.7.7
+
+      - name: Write GCP credentials
+        run: |
+          mkdir -p /tmp/secrets
+          echo '${{ secrets.GCP_CREDENTIALS }}' > /tmp/secrets/gcp-credentials.json
+
+      - name: dbt test
+        env:
+          DBT_KEYFILE_PATH: /tmp/secrets/gcp-credentials.json
+        run: |
+          dbt test \
+            --project-dir dbt \
+            --profiles-dir dbt

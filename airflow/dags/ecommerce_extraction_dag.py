@@ -112,9 +112,10 @@ with DAG(
 
         get_timestamp_task >> extract_task >> load_task
 
-    dbt_run = BashOperator(
+        dbt_run = BashOperator(
         task_id="dbt_run",
         bash_command=(
+            "export DBT_KEYFILE_PATH=/opt/airflow/secrets/gcp-credentials.json && "
             "dbt run "
             "--project-dir /opt/airflow/dbt "
             "--profiles-dir /opt/airflow/dbt"
