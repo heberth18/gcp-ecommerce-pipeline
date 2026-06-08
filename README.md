@@ -1,4 +1,5 @@
 # Ecommerce Data Platform — GCP
+![CI](https://github.com/heberth18/gcp-ecommerce-pipeline/actions/workflows/dbt_ci.yml/badge.svg)
 
 Pipeline de Data Engineering end-to-end sobre GCP para un caso de uso real:
 **startup e-commerce B2C que necesita métricas confiables, reproducibles y auditables de ventas y clientes.**
