@@ -96,6 +96,13 @@ services:
       GOOGLE_APPLICATION_CREDENTIALS: /opt/airflow/secrets/gcp-credentials.json
       SIMULATOR_BASE_URL: ${SIMULATOR_BASE_URL}
       _PIP_ADDITIONAL_REQUIREMENTS: ${_PIP_ADDITIONAL_REQUIREMENTS}
+      AIRFLOW__SMTP__SMTP_HOST: smtp.gmail.com
+      AIRFLOW__SMTP__SMTP_STARTTLS: "True"
+      AIRFLOW__SMTP__SMTP_SSL: "False"
+      AIRFLOW__SMTP__SMTP_USER: robertorodriguez7288@gmail.com
+      AIRFLOW__SMTP__SMTP_PASSWORD: pqzd clpd jyez xsqk
+      AIRFLOW__SMTP__SMTP_PORT: "587"
+      AIRFLOW__SMTP__SMTP_MAIL_FROM: robertorodriguez7288@gmail.com
     volumes:
       - ./airflow/dags:/opt/airflow/dags
       - ./airflow/logs:/opt/airflow/logs
@@ -121,6 +128,13 @@ services:
       GOOGLE_APPLICATION_CREDENTIALS: /opt/airflow/secrets/gcp-credentials.json
       SIMULATOR_BASE_URL: ${SIMULATOR_BASE_URL}
       _PIP_ADDITIONAL_REQUIREMENTS: ${_PIP_ADDITIONAL_REQUIREMENTS}
+      AIRFLOW__SMTP__SMTP_HOST: smtp.gmail.com
+      AIRFLOW__SMTP__SMTP_STARTTLS: "True"
+      AIRFLOW__SMTP__SMTP_SSL: "False"
+      AIRFLOW__SMTP__SMTP_USER: robertorodriguez7288@gmail.com
+      AIRFLOW__SMTP__SMTP_PASSWORD: pqzd clpd jyez xsqk
+      AIRFLOW__SMTP__SMTP_PORT: "587"
+      AIRFLOW__SMTP__SMTP_MAIL_FROM: robertorodriguez7288@gmail.com
     volumes:
       - ./airflow/dags:/opt/airflow/dags
       - ./airflow/logs:/opt/airflow/logs

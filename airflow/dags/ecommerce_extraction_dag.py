@@ -4,6 +4,7 @@ from datetime import datetime, timedelta, timezone
 from airflow import DAG
 from airflow.operators.python import PythonOperator
 from airflow.operators.bash import BashOperator
+from callbacks.alerts import on_failure_alert
 
 from utils.api_client import fetch_entity
 from utils.state_manager import get_last_extracted, set_last_extracted, get_run_timestamp
@@ -26,6 +27,7 @@ default_args = {
     "retries": 3,
     "retry_delay": timedelta(minutes=5),
     "email_on_failure": False,
+    "on_failure_callback": on_failure_alert,
 }
 
 
@@ -36,6 +38,7 @@ def get_run_ts(**context) -> None:
 
 
 def extract_entity(entity: str, **context) -> None:
+
     run_timestamp = context["ti"].xcom_pull(
         task_ids="get_run_timestamp", key="run_timestamp"
     )
@@ -112,14 +115,14 @@ with DAG(
 
         get_timestamp_task >> extract_task >> load_task
 
-        dbt_run = BashOperator(
-        task_id="dbt_run",
-        bash_command=(
-            "export DBT_KEYFILE_PATH=/opt/airflow/secrets/gcp-credentials.json && "
-            "dbt run "
-            "--project-dir /opt/airflow/dbt "
-            "--profiles-dir /opt/airflow/dbt"
-        ),
-    )
+    dbt_run = BashOperator(
+    task_id="dbt_run",
+    bash_command=(
+        "export DBT_KEYFILE_PATH=/opt/airflow/secrets/gcp-credentials.json && "
+        "dbt run "
+        "--project-dir /opt/airflow/dbt "
+        "--profiles-dir /opt/airflow/dbt"
+    ),
+)
 
     load_tasks >> dbt_run
